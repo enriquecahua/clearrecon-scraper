@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClearRecon CA Scraper</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            color: #666;
+        }
+        .results {
+            margin-top: 30px;
+        }
+        .result-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .result-city {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .result-address {
+            color: #666;
+            margin: 5px 0;
+        }
+        .result-date {
+            color: #28a745;
+            font-size: 14px;
+        }
+        .result-details {
+            margin-top: 10px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ClearRecon California Listings Scraper</h1>
+        
+        <form id="scrapeForm">
+            <div class="form-group">
+                <label for="email">Email (optional):</label>
+                <input type="email" id="email" name="email" placeholder="your@email.com">
+            </div>
+            
+            <div class="form-group">
+                <label for="city">City:</label>
+                <input type="text" id="city" name="city" value="{{ default_city }}" required>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="start_date">Start Date:</label>
+                    <input type="date" id="start_date" name="start_date" value="{{ default_start }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="end_date">End Date:</label>
+                    <input type="date" id="end_date" name="end_date" value="{{ default_end }}" required>
+                </div>
+            </div>
+            
+            <button type="submit" id="submitBtn">Search Listings</button>
+        </form>
+        
+        <div class="loading" id="loading">
+            <p>🔍 Scraping listings... This may take a moment.</p>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        document.getElementById('scrapeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Searching...';
+            loading.style.display = 'block';
+            results.innerHTML = '';
+            
+            try {
+                const formData = new FormData(this);
+                const response = await fetch('/scrape', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayResults(data.results, data.count);
+                } else {
+                    displayError(data.error || 'Unknown error occurred');
+                }
+                
+            } catch (error) {
+                displayError('Network error: ' + error.message);
+            } finally {
+                // Reset form state
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Search Listings';
+                loading.style.display = 'none';
+            }
+        });
+        
+        function displayResults(listings, count) {
+            const results = document.getElementById('results');
+            
+            if (count === 0) {
+                results.innerHTML = `
+                    <div class="error">
+                        <h3>No Results Found</h3>
+                        <p>No listings were found matching your criteria. This could be because:</p>
+                        <ul>
+                            <li>No listings are available for the specified city and date range</li>
+                            <li>The website structure has changed</li>
+                            <li>The site is temporarily unavailable</li>
+                        </ul>
+                        <p>Try adjusting your search criteria or try again later.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <div class="success">
+                    <h3>Found ${count} listing${count !== 1 ? 's' : ''}</h3>
+                </div>
+                <div class="results">
+            `;
+            
+            listings.forEach((listing, index) => {
+                html += `
+                    <div class="result-item">
+                        <div class="result-city">${escapeHtml(listing.city)}</div>
+                        ${listing.address ? `<div class="result-address">📍 ${escapeHtml(listing.address)}</div>` : ''}
+                        ${listing.date_found ? `<div class="result-date">📅 ${escapeHtml(listing.date_found)}</div>` : ''}
+                        <div class="result-details">${escapeHtml(listing.full_text || listing.details || 'No additional details')}</div>
+                        ${listing.error ? `<div style="color: red; margin-top: 10px;">⚠️ ${escapeHtml(listing.error)}</div>` : ''}
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            results.innerHTML = html;
+        }
+        
+        function displayError(message) {
+            const results = document.getElementById('results');
+            results.innerHTML = `
+                <div class="error">
+                    <h3>Error</h3>
+                    <p>${escapeHtml(message)}</p>
+                    <p>Please try again or contact support if the problem persists.</p>
+                </div>
+            `;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

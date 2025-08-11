@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClearRecon CA Scraper - Full Version</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .btn-success {
+            background-color: #28a745;
+        }
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            color: #666;
+        }
+        .results {
+            margin-top: 30px;
+        }
+        .result-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .result-city {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .result-address {
+            color: #666;
+            margin: 5px 0;
+        }
+        .result-date {
+            color: #28a745;
+            font-size: 14px;
+        }
+        .result-price {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .result-details {
+            margin-top: 10px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+        .nav-links {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .nav-links a {
+            margin: 0 10px;
+            padding: 8px 15px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 3px;
+        }
+        .nav-links a:hover {
+            background: #545b62;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 5px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ClearRecon California Listings Scraper - Full Version</h1>
+        
+        <div class="nav-links">
+            <a href="/csv" target="_blank">View CSV Data</a>
+            <a href="/cities">View All Cities</a>
+            <a href="/health">System Status</a>
+        </div>
+        
+        <!-- Step 1: Scrape All Data -->
+        <div class="section">
+            <h2>Step 1: Scrape All Listings</h2>
+            
+            <div style="background: #e7f3ff; padding: 15px; border-radius: 5px; margin-bottom: 15px; border-left: 4px solid #007bff;">
+                <h4 style="margin: 0 0 10px 0; color: #0056b3;">📅 Automated Daily Updates</h4>
+                <p style="margin: 0 0 10px 0;"><strong>Data automatically refreshed daily at 2:00 AM</strong></p>
+                <p style="margin: 0; font-size: 14px; color: #666;">
+                    Last updated: <strong>{{ last_scrape_time or "Never" }}</strong>
+                </p>
+            </div>
+            
+            <p>Use existing data for instant filtering, or manually refresh if you need the very latest listings.</p>
+            
+            <button id="scrapeAllBtn" onclick="scrapeAll()">🔍 Manual Refresh (May Take 10+ Minutes)</button>
+            <p style="font-size: 12px; color: #666; margin-top: 5px;">
+                ⚠️ Manual scraping extracts all 666+ listings and may take 10-15 minutes. 
+                Consider using the existing data which is automatically updated daily.
+            </p>
+            
+            <div class="loading" id="scrapeLoading">
+                <p>🚀 Manually scraping all listings... This may take 10-15 minutes.</p>
+                <p>The scraper is accepting terms, selecting "Show All", and extracting all unique data...</p>
+                <div style="background: #fff3cd; padding: 10px; border-radius: 4px; margin-top: 10px;">
+                    <small>💡 <strong>Tip:</strong> You can use Step 2 filtering with existing data while this runs.</small>
+                </div>
+            </div>
+            <div id="scrapeResults"></div>
+        </div>
+        
+        <!-- Step 2: Filter Results -->
+        <div class="section">
+            <h2>Step 2: Filter Results</h2>
+            <p>Filter the scraped data by your criteria. Cities are populated from the CSV data.</p>
+            
+            <form id="filterForm">
+                <div class="form-group">
+                    <label for="email">Email (optional):</label>
+                    <input type="email" id="email" name="email" placeholder="your@email.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="city">City:</label>
+                    <select id="city" name="city" required>
+                        <option value="all">All Cities</option>
+                        {% for city in cities %}
+                        <option value="{{ city }}">{{ city }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="start_date">Start Date:</label>
+                        <input type="date" id="start_date" name="start_date" value="{{ default_start }}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="end_date">End Date:</label>
+                        <input type="date" id="end_date" name="end_date" value="{{ default_end }}" required>
+                    </div>
+                </div>
+                
+                <button type="submit" id="filterBtn">🔍 Filter Listings</button>
+                <button type="button" onclick="refreshCities()" class="btn-secondary">🔄 Refresh Cities</button>
+            </form>
+            
+            <div class="loading" id="filterLoading">
+                <p>🔍 Filtering results...</p>
+            </div>
+            
+            <div id="filterResults"></div>
+        </div>
+        
+        <!-- Results Display -->
+        <div id="results"></div>
+    </div>
+
+    <script>
+        async function scrapeAll() {
+            const scrapeBtn = document.getElementById('scrapeAllBtn');
+            const loading = document.getElementById('scrapeLoading');
+            const results = document.getElementById('scrapeResults');
+            
+            scrapeBtn.disabled = true;
+            scrapeBtn.textContent = 'Scraping...';
+            loading.style.display = 'block';
+            results.innerHTML = '';
+            
+            try {
+                const response = await fetch('/scrape_all', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Extract number from message like "Successfully scraped 25 listings"
+                    const listingsCount = data.message.match(/scraped (\d+) listings/)?.[1] || 
+                                        data.message.match(/(\d+) listings/)?.[1] || 
+                                        data.message.match(/(\d+)/)?.[0] || '0';
+                    
+                    results.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Scraping Complete!</h3>
+                            <div class="stats">
+                                <div class="stat-item">
+                                    <div class="stat-number">${listingsCount}</div>
+                                    <div class="stat-label">Total Listings</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">${data.cities_found || 0}</div>
+                                    <div class="stat-label">Cities Found</div>
+                                </div>
+                            </div>
+                            <p><strong>CSV File:</strong> ${data.csv_path}</p>
+                            <p><strong>Sample Cities:</strong> ${data.cities ? data.cities.join(', ') : 'None'}</p>
+                            <p>You can now filter the results using the form below.</p>
+                        </div>
+                    `;
+                    
+                    // Refresh the cities dropdown
+                    await refreshCities();
+                } else {
+                    results.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Scraping Failed</h3>
+                            <p>${data.error}</p>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                results.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Network Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            } finally {
+                scrapeBtn.disabled = false;
+                scrapeBtn.textContent = '🔍 Scrape All Listings';
+                loading.style.display = 'none';
+            }
+        }
+        
+        document.getElementById('filterForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const filterBtn = document.getElementById('filterBtn');
+            const loading = document.getElementById('filterLoading');
+            const results = document.getElementById('results');
+            
+            filterBtn.disabled = true;
+            filterBtn.textContent = 'Filtering...';
+            loading.style.display = 'block';
+            results.innerHTML = '';
+            
+            try {
+                const formData = new FormData(this);
+                const response = await fetch('/filter', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayResults(data.results, data.count, data.total_available);
+                } else {
+                    displayError(data.error || 'Unknown error occurred');
+                }
+                
+            } catch (error) {
+                displayError('Network error: ' + error.message);
+            } finally {
+                filterBtn.disabled = false;
+                filterBtn.textContent = '🔍 Filter Listings';
+                loading.style.display = 'none';
+            }
+        });
+        
+        function displayResults(listings, count, total) {
+            const results = document.getElementById('results');
+            
+            if (count === 0) {
+                results.innerHTML = `
+                    <div class="info">
+                        <h3>No Results Found</h3>
+                        <p>No listings match your criteria out of ${total} total listings available.</p>
+                        <p>Try adjusting your search criteria:</p>
+                        <ul>
+                            <li>Select "All Cities" to see all available listings</li>
+                            <li>Expand your date range</li>
+                            <li>Check if the CSV data has been scraped</li>
+                        </ul>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <div class="success">
+                    <h3>Found ${count} listing${count !== 1 ? 's' : ''} (out of ${total} total)</h3>
+                </div>
+                <div class="results">
+            `;
+            
+            listings.forEach((listing, index) => {
+                html += `
+                    <div class="result-item">
+                        <div class="result-city">🏙️ ${escapeHtml(listing.city || 'Unknown City')}</div>
+                        ${listing.address ? `<div class="result-address">📍 ${escapeHtml(listing.address)}</div>` : ''}
+                        ${listing.date ? `<div class="result-date">📅 ${escapeHtml(listing.date)}</div>` : ''}
+                        ${listing.price ? `<div class="result-price">💰 ${escapeHtml(listing.price)}</div>` : ''}
+                        <div class="result-details">${escapeHtml(listing.details || listing.raw_data || 'No additional details')}</div>
+                        ${listing.table_index ? `<small>Table ${listing.table_index}, Row ${listing.row_index || 'N/A'}</small>` : ''}
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            results.innerHTML = html;
+        }
+        
+        function displayError(message) {
+            const results = document.getElementById('results');
+            results.innerHTML = `
+                <div class="error">
+                    <h3>Error</h3>
+                    <p>${escapeHtml(message)}</p>
+                    <p>Please try the following:</p>
+                    <ul>
+                        <li>Make sure you've scraped all listings first (Step 1)</li>
+                        <li>Check the <a href="/csv" target="_blank">CSV data</a> is available</li>
+                        <li>Try refreshing the page</li>
+                    </ul>
+                </div>
+            `;
+        }
+        
+        async function refreshCities() {
+            try {
+                const response = await fetch('/cities');
+                const data = await response.json();
+                
+                const citySelect = document.getElementById('city');
+                citySelect.innerHTML = '<option value="all">All Cities</option>';
+                
+                data.cities.forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    citySelect.appendChild(option);
+                });
+                
+            } catch (error) {
+                console.error('Error refreshing cities:', error);
+            }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Load cities on page load
+        document.addEventListener('DOMContentLoaded', refreshCities);
+    </script>
+</body>
+</html>
