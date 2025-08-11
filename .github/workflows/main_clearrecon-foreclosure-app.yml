@@ -23,8 +23,8 @@ jobs:
     - name: Log in to Docker Hub
       uses: docker/login-action@v2
       with:
-        username: ${{ secrets.CONTAINERUSERNAME }}
-        password: ${{ secrets.CONTAINERPASSWORD }}
+        username: ${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_27A2B000ADC04AF695A98D87D4347B25 }}
+        password: ${{ secrets.AZUREAPPSERVICE_CONTAINERPASSWORD_16E6CDD0968C448BBDECC232C1518D8F }}
 
     - name: Build and push container image to Docker Hub
       uses: docker/build-push-action@v3
