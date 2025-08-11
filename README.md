@@ -2,6 +2,8 @@
 
 A production-ready web application that scrapes California foreclosure listings from ClearRecon and provides filtering, CSV export, and email functionality.
 
+<!-- Deployment trigger: Azure deployment with Docker Hub authentication -->
+
 ## 🚀 Features
 
 - **Selenium-based scraping** - Bypasses JavaScript disclaimer and extracts all listings
