@@ -295,62 +295,62 @@ def scrape_clearrecon_selenium_enhanced() -> str:
     
     try:
         print("Step 1: Initializing Chrome WebDriver...")
-        # Use webdriver-manager for automatic ChromeDriver setup with Azure Linux fix
-        chromedriver_path = ChromeDriverManager().install()
-        print(f"ChromeDriver downloaded to: {chromedriver_path}")
         
-        # Enhanced fix for Azure Linux: ensure we're using the actual chromedriver binary
-        if chromedriver_path.endswith('THIRD_PARTY_NOTICES.chromedriver'):
-            print("Detected THIRD_PARTY_NOTICES file - searching for actual ChromeDriver binary...")
-            driver_dir = os.path.dirname(chromedriver_path)
+        # Try webdriver-manager first, but with immediate fallback if it fails
+        try:
+            print("Attempting webdriver-manager approach...")
+            chromedriver_path = ChromeDriverManager().install()
+            print(f"ChromeDriver downloaded to: {chromedriver_path}")
             
-            # List all files in the directory for debugging
+            # Check if we got the problematic THIRD_PARTY_NOTICES file
+            if chromedriver_path.endswith('THIRD_PARTY_NOTICES.chromedriver'):
+                print("Got THIRD_PARTY_NOTICES file - this won't work, switching to system ChromeDriver...")
+                raise Exception("webdriver-manager returned non-executable file")
+            
+            # Try to use the webdriver-manager path
+            import stat
+            os.chmod(chromedriver_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+            service = Service(chromedriver_path)
+            driver = webdriver.Chrome(service=service, options=chrome_options)
+            print("✅ webdriver-manager ChromeDriver successful")
+            
+        except Exception as wdm_error:
+            print(f"webdriver-manager failed: {wdm_error}")
+            print("Falling back to system ChromeDriver (no service path)...")
+            
+            # Fallback: Let Selenium find ChromeDriver automatically
+            # This works if ChromeDriver is in PATH or if Chrome can find it
             try:
-                files_in_dir = os.listdir(driver_dir)
-                print(f"Files in ChromeDriver directory: {files_in_dir}")
-            except:
-                print("Could not list directory contents")
-            
-            # Try multiple possible binary names and locations
-            possible_names = [
-                'chromedriver',
-                'chromedriver-linux64', 
-                'chromedriver_linux64',
-                'chromedriver.exe'
-            ]
-            
-            found_driver = False
-            for name in possible_names:
-                alt_path = os.path.join(driver_dir, name)
-                if os.path.exists(alt_path):
-                    chromedriver_path = alt_path
-                    print(f"Found ChromeDriver binary: {chromedriver_path}")
-                    found_driver = True
-                    break
-            
-            # If not found in same directory, try parent directory
-            if not found_driver:
-                parent_dir = os.path.dirname(driver_dir)
-                print(f"Searching parent directory: {parent_dir}")
-                for name in possible_names:
-                    alt_path = os.path.join(parent_dir, name)
-                    if os.path.exists(alt_path):
-                        chromedriver_path = alt_path
-                        print(f"Found ChromeDriver binary in parent: {chromedriver_path}")
-                        found_driver = True
-                        break
-            
-            if not found_driver:
-                print("Warning: Could not find actual ChromeDriver binary, trying original path anyway...")
+                driver = webdriver.Chrome(options=chrome_options)
+                print("✅ System ChromeDriver successful")
+            except Exception as system_error:
+                print(f"System ChromeDriver also failed: {system_error}")
+                
+                # Last resort: Try common system paths
+                common_paths = [
+                    '/usr/bin/chromedriver',
+                    '/usr/local/bin/chromedriver',
+                    '/opt/google/chrome/chromedriver'
+                ]
+                
+                driver_found = False
+                for path in common_paths:
+                    if os.path.exists(path):
+                        print(f"Trying common path: {path}")
+                        try:
+                            os.chmod(path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+                            service = Service(path)
+                            driver = webdriver.Chrome(service=service, options=chrome_options)
+                            print(f"✅ ChromeDriver successful at: {path}")
+                            driver_found = True
+                            break
+                        except Exception as path_error:
+                            print(f"Failed with {path}: {path_error}")
+                            continue
+                
+                if not driver_found:
+                    raise Exception(f"All ChromeDriver initialization methods failed. webdriver-manager: {wdm_error}, system: {system_error}")
         
-        print(f"Final ChromeDriver path: {chromedriver_path}")
-        
-        # Make sure the driver is executable
-        import stat
-        os.chmod(chromedriver_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
-        
-        service = Service(chromedriver_path)
-        driver = webdriver.Chrome(service=service, options=chrome_options)
         driver.set_page_load_timeout(30)
         
         print("Step 2: Navigating to ClearRecon...")
