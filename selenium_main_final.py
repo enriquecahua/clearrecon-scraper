@@ -60,14 +60,14 @@ async def scrape_all_listings():
     try:
         print("Starting enhanced Selenium scrape for ALL listings...")
         
-        csv_path = await scrape_clearrecon_selenium_enhanced()
+        csv_path = scrape_clearrecon_selenium_enhanced()
         
         if csv_path and os.path.exists(csv_path):
             global latest_csv_path, all_cities
             latest_csv_path = csv_path
             
             # Extract all unique cities
-            all_cities = await extract_cities_from_csv(csv_path)
+            all_cities = extract_cities_from_csv(csv_path)
             
             # Get row count
             with open(csv_path, 'r', encoding='utf-8') as f:
@@ -279,7 +279,7 @@ async def run_diagnostics():
             "recommendation": "Check server logs for detailed error information"
         })
 
-async def scrape_clearrecon_selenium_enhanced() -> str:
+def scrape_clearrecon_selenium_enhanced() -> str:
     """Enhanced Selenium scraper with comprehensive pagination handling for all 666+ listings."""
     
     # Configure Chrome options for Azure deployment
@@ -466,7 +466,7 @@ async def scrape_clearrecon_selenium_enhanced() -> str:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         csv_path = f"csv_data/clearrecon_listings_enhanced_{timestamp}.csv"
         
-        await save_to_csv(list(unique_listings.values()), csv_path)
+        save_to_csv(list(unique_listings.values()), csv_path)
         print(f"Saved {len(unique_listings)} unique listings to {csv_path}")
         
         return csv_path
@@ -782,7 +782,7 @@ def get_latest_csv_path() -> Optional[str]:
         return None
     return max(csv_files, key=os.path.getctime)
 
-async def extract_cities_from_csv(csv_path: str) -> List[str]:
+def extract_cities_from_csv(csv_path: str) -> List[str]:
     """Extract all unique cities from the CSV file with proper capitalization."""
     try:
         cities = set()
