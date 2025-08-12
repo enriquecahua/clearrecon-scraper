@@ -245,6 +245,40 @@ async def health_check():
         "latest_csv": get_latest_csv_path() is not None
     })
 
+@app.get("/diagnostics")
+async def run_diagnostics():
+    """Run comprehensive diagnostics to identify CSV creation issues."""
+    try:
+        # Import diagnostics here to avoid startup issues
+        from azure_diagnostics import AzureDiagnostics
+        
+        diagnostics = AzureDiagnostics()
+        results = diagnostics.run_all_tests()
+        
+        # Calculate summary
+        total_tests = len(results)
+        passed_tests = sum(1 for r in results if r['status'])
+        failed_tests = total_tests - passed_tests
+        
+        return JSONResponse({
+            "success": True,
+            "summary": {
+                "total_tests": total_tests,
+                "passed": passed_tests,
+                "failed": failed_tests,
+                "success_rate": f"{(passed_tests/total_tests*100):.1f}%" if total_tests > 0 else "0%"
+            },
+            "results": results,
+            "recommendation": "All tests passed - issue may be in scraping logic" if failed_tests == 0 else "Some tests failed - check failed tests for root cause"
+        })
+        
+    except Exception as e:
+        return JSONResponse({
+            "success": False,
+            "error": f"Diagnostics failed: {str(e)}",
+            "recommendation": "Check server logs for detailed error information"
+        })
+
 async def scrape_clearrecon_selenium_enhanced() -> str:
     """Enhanced Selenium scraper with comprehensive pagination handling for all 666+ listings."""
     
