@@ -295,8 +295,32 @@ async def scrape_clearrecon_selenium_enhanced() -> str:
     
     try:
         print("Step 1: Initializing Chrome WebDriver...")
-        # Use webdriver-manager for automatic ChromeDriver setup
-        service = Service(ChromeDriverManager().install())
+        # Use webdriver-manager for automatic ChromeDriver setup with Azure Linux fix
+        chromedriver_path = ChromeDriverManager().install()
+        print(f"ChromeDriver downloaded to: {chromedriver_path}")
+        
+        # Fix for Azure Linux: ensure we're using the actual chromedriver binary
+        if chromedriver_path.endswith('THIRD_PARTY_NOTICES.chromedriver'):
+            # Find the actual chromedriver binary in the same directory
+            driver_dir = os.path.dirname(chromedriver_path)
+            actual_driver = os.path.join(driver_dir, 'chromedriver')
+            if os.path.exists(actual_driver):
+                chromedriver_path = actual_driver
+                print(f"Using actual ChromeDriver binary: {chromedriver_path}")
+            else:
+                # Try alternative names
+                for name in ['chromedriver-linux64', 'chromedriver_linux64']:
+                    alt_path = os.path.join(driver_dir, name)
+                    if os.path.exists(alt_path):
+                        chromedriver_path = alt_path
+                        print(f"Using alternative ChromeDriver: {chromedriver_path}")
+                        break
+        
+        # Make sure the driver is executable
+        import stat
+        os.chmod(chromedriver_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+        
+        service = Service(chromedriver_path)
         driver = webdriver.Chrome(service=service, options=chrome_options)
         driver.set_page_load_timeout(30)
         
