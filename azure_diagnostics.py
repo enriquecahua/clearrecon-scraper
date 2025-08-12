@@ -147,10 +147,34 @@ class AzureDiagnostics:
     def test_chromedriver_setup(self):
         """Test 5: ChromeDriver Setup"""
         try:
-            # Test ChromeDriver installation
-            driver_path = ChromeDriverManager().install()
-            if os.path.exists(driver_path):
-                self.log_test("ChromeDriver Setup", True, f"ChromeDriver installed at {driver_path}")
+            # Test ChromeDriver installation with improved path resolution
+            chromedriver_path = ChromeDriverManager().install()
+            
+            # Fix the common webdriver-manager bug where it returns the wrong file
+            if chromedriver_path.endswith('THIRD_PARTY_NOTICES.chromedriver'):
+                # Get the directory and look for the actual chromedriver binary
+                driver_dir = os.path.dirname(chromedriver_path)
+                possible_names = ['chromedriver', 'chromedriver.exe', 'chromedriver-linux64']
+                
+                actual_driver_path = None
+                for name in possible_names:
+                    test_path = os.path.join(driver_dir, name)
+                    if os.path.exists(test_path) and os.access(test_path, os.X_OK):
+                        actual_driver_path = test_path
+                        break
+                
+                if actual_driver_path:
+                    chromedriver_path = actual_driver_path
+                    self.log_test("ChromeDriver Setup", True, f"ChromeDriver corrected path: {chromedriver_path}")
+                else:
+                    self.log_test("ChromeDriver Setup", False, "webdriver-manager returned non-executable file and no binary found")
+                    return
+            
+            if os.path.exists(chromedriver_path):
+                # Ensure the file is executable
+                import stat
+                os.chmod(chromedriver_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+                self.log_test("ChromeDriver Setup", True, f"ChromeDriver installed at {chromedriver_path}")
             else:
                 self.log_test("ChromeDriver Setup", False, "ChromeDriver not found")
                 
@@ -169,8 +193,33 @@ class AzureDiagnostics:
             chrome_options.add_argument("--disable-gpu")
             chrome_options.add_argument("--window-size=1920,1080")
             
-            # Initialize WebDriver
-            service = Service(ChromeDriverManager().install())
+            # Initialize WebDriver with improved path resolution
+            chromedriver_path = ChromeDriverManager().install()
+            
+            # Fix the common webdriver-manager bug where it returns the wrong file
+            if chromedriver_path.endswith('THIRD_PARTY_NOTICES.chromedriver'):
+                # Get the directory and look for the actual chromedriver binary
+                driver_dir = os.path.dirname(chromedriver_path)
+                possible_names = ['chromedriver', 'chromedriver.exe', 'chromedriver-linux64']
+                
+                actual_driver_path = None
+                for name in possible_names:
+                    test_path = os.path.join(driver_dir, name)
+                    if os.path.exists(test_path) and os.access(test_path, os.X_OK):
+                        actual_driver_path = test_path
+                        break
+                
+                if actual_driver_path:
+                    chromedriver_path = actual_driver_path
+                else:
+                    raise Exception("webdriver-manager returned non-executable file and no binary found")
+            
+            # Ensure the file is executable
+            import stat
+            if os.path.exists(chromedriver_path):
+                os.chmod(chromedriver_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+            
+            service = Service(chromedriver_path)
             driver = webdriver.Chrome(service=service, options=chrome_options)
             driver.set_page_load_timeout(30)
             
@@ -204,8 +253,33 @@ class AzureDiagnostics:
             chrome_options.add_argument("--disable-gpu")
             chrome_options.add_argument("--window-size=1920,1080")
             
-            # Initialize WebDriver
-            service = Service(ChromeDriverManager().install())
+            # Initialize WebDriver with improved path resolution
+            chromedriver_path = ChromeDriverManager().install()
+            
+            # Fix the common webdriver-manager bug where it returns the wrong file
+            if chromedriver_path.endswith('THIRD_PARTY_NOTICES.chromedriver'):
+                # Get the directory and look for the actual chromedriver binary
+                driver_dir = os.path.dirname(chromedriver_path)
+                possible_names = ['chromedriver', 'chromedriver.exe', 'chromedriver-linux64']
+                
+                actual_driver_path = None
+                for name in possible_names:
+                    test_path = os.path.join(driver_dir, name)
+                    if os.path.exists(test_path) and os.access(test_path, os.X_OK):
+                        actual_driver_path = test_path
+                        break
+                
+                if actual_driver_path:
+                    chromedriver_path = actual_driver_path
+                else:
+                    raise Exception("webdriver-manager returned non-executable file and no binary found")
+            
+            # Ensure the file is executable
+            import stat
+            if os.path.exists(chromedriver_path):
+                os.chmod(chromedriver_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+            
+            service = Service(chromedriver_path)
             driver = webdriver.Chrome(service=service, options=chrome_options)
             driver.set_page_load_timeout(30)
             

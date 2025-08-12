@@ -296,23 +296,42 @@ def scrape_clearrecon_selenium_enhanced() -> str:
     try:
         print("Step 1: Initializing Chrome WebDriver...")
         
-        # Try webdriver-manager first, but with immediate fallback if it fails
+        # Try webdriver-manager first, but with improved path resolution
         try:
             print("Attempting webdriver-manager approach...")
             chromedriver_path = ChromeDriverManager().install()
             print(f"ChromeDriver downloaded to: {chromedriver_path}")
             
-            # Check if we got the problematic THIRD_PARTY_NOTICES file
+            # Fix the common webdriver-manager bug where it returns the wrong file
             if chromedriver_path.endswith('THIRD_PARTY_NOTICES.chromedriver'):
-                print("Got THIRD_PARTY_NOTICES file - this won't work, switching to system ChromeDriver...")
-                raise Exception("webdriver-manager returned non-executable file")
+                print("Got THIRD_PARTY_NOTICES file - finding actual ChromeDriver binary...")
+                # Get the directory and look for the actual chromedriver binary
+                driver_dir = os.path.dirname(chromedriver_path)
+                possible_names = ['chromedriver', 'chromedriver.exe', 'chromedriver-linux64']
+                
+                actual_driver_path = None
+                for name in possible_names:
+                    test_path = os.path.join(driver_dir, name)
+                    if os.path.exists(test_path) and os.access(test_path, os.X_OK):
+                        actual_driver_path = test_path
+                        break
+                
+                if actual_driver_path:
+                    chromedriver_path = actual_driver_path
+                    print(f"Found actual ChromeDriver at: {chromedriver_path}")
+                else:
+                    print("Could not find actual ChromeDriver binary - switching to system ChromeDriver...")
+                    raise Exception("webdriver-manager returned non-executable file and no binary found")
             
-            # Try to use the webdriver-manager path
+            # Ensure the file is executable
             import stat
-            os.chmod(chromedriver_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
-            service = Service(chromedriver_path)
-            driver = webdriver.Chrome(service=service, options=chrome_options)
-            print("✅ webdriver-manager ChromeDriver successful")
+            if os.path.exists(chromedriver_path):
+                os.chmod(chromedriver_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+                service = Service(chromedriver_path)
+                driver = webdriver.Chrome(service=service, options=chrome_options)
+                print("✅ webdriver-manager ChromeDriver successful")
+            else:
+                raise Exception(f"ChromeDriver path does not exist: {chromedriver_path}")
             
         except Exception as wdm_error:
             print(f"webdriver-manager failed: {wdm_error}")
