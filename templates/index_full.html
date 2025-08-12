@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClearRecon CA Scraper - Full Version</title>
+    <title>ClearRecon CA Foreclosure Listings - Cached Data</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -184,7 +184,16 @@
 </head>
 <body>
     <div class="container">
-        <h1>ClearRecon California Listings Scraper - Full Version</h1>
+        <h1>ClearRecon California Foreclosure Listings</h1>
+        
+        <div class="info" style="margin-bottom: 20px;">
+            <h3>📊 Cached Data Overview</h3>
+            <p><strong>Data Source:</strong> ClearRecon California foreclosure listings</p>
+            <p><strong>Last Updated:</strong> August 11, 2025 at 2:02 AM</p>
+            <p><strong>Total Listings:</strong> 654 foreclosure properties</p>
+            <p><strong>Cities Available:</strong> 194+ unique California cities</p>
+            <p><em>This data represents a comprehensive snapshot of California foreclosure listings and is updated periodically.</em></p>
+        </div>
         
         <div class="nav-links">
             <a href="/csv" target="_blank">View CSV Data</a>
@@ -193,40 +202,14 @@
             <a href="/diagnostics" target="_blank" style="background: #dc3545;">🔍 Run Diagnostics</a>
         </div>
         
-        <!-- Step 1: Scrape All Data -->
+        <!-- Filter Cached Results -->
         <div class="section">
-            <h2>Step 1: Scrape All Listings</h2>
+            <h2>🔍 Filter Foreclosure Listings</h2>
+            <p>Filter the cached foreclosure data by city and date range. All 194+ California cities are available for selection.</p>
             
-            <div style="background: #e7f3ff; padding: 15px; border-radius: 5px; margin-bottom: 15px; border-left: 4px solid #007bff;">
-                <h4 style="margin: 0 0 10px 0; color: #0056b3;">📅 Automated Daily Updates</h4>
-                <p style="margin: 0 0 10px 0;"><strong>Data automatically refreshed daily at 2:00 AM</strong></p>
-                <p style="margin: 0; font-size: 14px; color: #666;">
-                    Last updated: <strong>{{ last_scrape_time or "Never" }}</strong>
-                </p>
+            <div style="background: #d4edda; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #28a745;">
+                <p><strong>✅ Ready to Use:</strong> 654 foreclosure listings from 194+ cities are immediately available for filtering.</p>
             </div>
-            
-            <p>Use existing data for instant filtering, or manually refresh if you need the very latest listings.</p>
-            
-            <button id="scrapeAllBtn" onclick="scrapeAll()">🔍 Manual Refresh (May Take 10+ Minutes)</button>
-            <p style="font-size: 12px; color: #666; margin-top: 5px;">
-                ⚠️ Manual scraping extracts all 666+ listings and may take 10-15 minutes. 
-                Consider using the existing data which is automatically updated daily.
-            </p>
-            
-            <div class="loading" id="scrapeLoading">
-                <p>🚀 Manually scraping all listings... This may take 10-15 minutes.</p>
-                <p>The scraper is accepting terms, selecting "Show All", and extracting all unique data...</p>
-                <div style="background: #fff3cd; padding: 10px; border-radius: 4px; margin-top: 10px;">
-                    <small>💡 <strong>Tip:</strong> You can use Step 2 filtering with existing data while this runs.</small>
-                </div>
-            </div>
-            <div id="scrapeResults"></div>
-        </div>
-        
-        <!-- Step 2: Filter Results -->
-        <div class="section">
-            <h2>Step 2: Filter Results</h2>
-            <p>Filter the scraped data by your criteria. Cities are populated from the CSV data.</p>
             
             <form id="filterForm">
                 <div class="form-group">
@@ -256,7 +239,7 @@
                     </div>
                 </div>
                 
-                <button type="submit" id="filterBtn">🔍 Filter Listings</button>
+                <button type="submit" id="filterBtn">🔍 Filter Cached Listings</button>
                 <button type="button" onclick="refreshCities()" class="btn-secondary">🔄 Refresh Cities</button>
             </form>
             
@@ -387,7 +370,7 @@
                         <ul>
                             <li>Select "All Cities" to see all available listings</li>
                             <li>Expand your date range</li>
-                            <li>Check if the CSV data has been scraped</li>
+                            <li>Verify the cached data is available</li>
                         </ul>
                     </div>
                 `;
@@ -426,7 +409,7 @@
                     <p>${escapeHtml(message)}</p>
                     <p>Please try the following:</p>
                     <ul>
-                        <li>Make sure you've scraped all listings first (Step 1)</li>
+                        <li>Verify the cached data is properly loaded</li>
                         <li>Check the <a href="/csv" target="_blank">CSV data</a> is available</li>
                         <li>Try refreshing the page</li>
                     </ul>
