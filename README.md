@@ -1,4 +1,5 @@
 # ClearRecon California Foreclosure Listings Scraper
+<!-- Deployment trigger: 2025-08-11 -->
 
 A production-ready web application that scrapes California foreclosure listings from ClearRecon and provides filtering, CSV export, and email functionality.
 

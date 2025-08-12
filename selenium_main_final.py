@@ -299,22 +299,51 @@ def scrape_clearrecon_selenium_enhanced() -> str:
         chromedriver_path = ChromeDriverManager().install()
         print(f"ChromeDriver downloaded to: {chromedriver_path}")
         
-        # Fix for Azure Linux: ensure we're using the actual chromedriver binary
+        # Enhanced fix for Azure Linux: ensure we're using the actual chromedriver binary
         if chromedriver_path.endswith('THIRD_PARTY_NOTICES.chromedriver'):
-            # Find the actual chromedriver binary in the same directory
+            print("Detected THIRD_PARTY_NOTICES file - searching for actual ChromeDriver binary...")
             driver_dir = os.path.dirname(chromedriver_path)
-            actual_driver = os.path.join(driver_dir, 'chromedriver')
-            if os.path.exists(actual_driver):
-                chromedriver_path = actual_driver
-                print(f"Using actual ChromeDriver binary: {chromedriver_path}")
-            else:
-                # Try alternative names
-                for name in ['chromedriver-linux64', 'chromedriver_linux64']:
-                    alt_path = os.path.join(driver_dir, name)
+            
+            # List all files in the directory for debugging
+            try:
+                files_in_dir = os.listdir(driver_dir)
+                print(f"Files in ChromeDriver directory: {files_in_dir}")
+            except:
+                print("Could not list directory contents")
+            
+            # Try multiple possible binary names and locations
+            possible_names = [
+                'chromedriver',
+                'chromedriver-linux64', 
+                'chromedriver_linux64',
+                'chromedriver.exe'
+            ]
+            
+            found_driver = False
+            for name in possible_names:
+                alt_path = os.path.join(driver_dir, name)
+                if os.path.exists(alt_path):
+                    chromedriver_path = alt_path
+                    print(f"Found ChromeDriver binary: {chromedriver_path}")
+                    found_driver = True
+                    break
+            
+            # If not found in same directory, try parent directory
+            if not found_driver:
+                parent_dir = os.path.dirname(driver_dir)
+                print(f"Searching parent directory: {parent_dir}")
+                for name in possible_names:
+                    alt_path = os.path.join(parent_dir, name)
                     if os.path.exists(alt_path):
                         chromedriver_path = alt_path
-                        print(f"Using alternative ChromeDriver: {chromedriver_path}")
+                        print(f"Found ChromeDriver binary in parent: {chromedriver_path}")
+                        found_driver = True
                         break
+            
+            if not found_driver:
+                print("Warning: Could not find actual ChromeDriver binary, trying original path anyway...")
+        
+        print(f"Final ChromeDriver path: {chromedriver_path}")
         
         # Make sure the driver is executable
         import stat
