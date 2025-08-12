@@ -41,57 +41,54 @@ os.makedirs("debug", exist_ok=True)
 
 templates = Jinja2Templates(directory="templates")
 
-# Global variables for caching
-latest_csv_path = None
+# Global variables for caching - Use the successful CSV with 654 results
+latest_csv_path = "csv_data/clearrecon_listings_enhanced_20250811_020245.csv"
 all_cities = []
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    """Main page with comprehensive scraper interface."""
+    """Main page with filtering interface - uses existing CSV with 654 results."""
+    global all_cities, latest_csv_path
+    
+    # Initialize cities from the existing CSV on startup
+    if not all_cities and latest_csv_path and os.path.exists(latest_csv_path):
+        all_cities = extract_cities_from_csv(latest_csv_path)
+    
     return templates.TemplateResponse("index_full.html", {
         "request": request,
         "default_start": date.today().strftime("%Y-%m-%d"),
-        "default_end": (date.today() + timedelta(days=30)).strftime("%Y-%m-%d")
+        "default_end": (date.today() + timedelta(days=30)).strftime("%Y-%m-%d"),
+        "cities_available": len(all_cities),
+        "total_listings": get_csv_row_count()
     })
 
-@app.post("/scrape_all")
-async def scrape_all_listings():
-    """Scrape all listings using enhanced Selenium with pagination handling."""
-    try:
-        print("Starting enhanced Selenium scrape for ALL listings...")
-        
-        csv_path = scrape_clearrecon_selenium_enhanced()
-        
-        if csv_path and os.path.exists(csv_path):
-            global latest_csv_path, all_cities
-            latest_csv_path = csv_path
-            
-            # Extract all unique cities
-            all_cities = extract_cities_from_csv(csv_path)
-            
-            # Get row count
-            with open(csv_path, 'r', encoding='utf-8') as f:
-                row_count = sum(1 for line in csv.DictReader(f))
-            
-            return JSONResponse({
-                "success": True,
-                "message": f"Successfully scraped {row_count} listings",
-                "csv_path": csv_path,
-                "cities_found": len(all_cities),
-                "cities": all_cities[:10]  # Show first 10 cities
-            })
-        else:
-            return JSONResponse({
-                "success": False,
-                "error": "Failed to create CSV file"
-            })
-            
-    except Exception as e:
-        print(f"Scrape error: {e}")
+@app.get("/data_info")
+async def get_data_info():
+    """Get information about the existing CSV data with 654 results."""
+    global latest_csv_path, all_cities
+    
+    if not latest_csv_path or not os.path.exists(latest_csv_path):
         return JSONResponse({
             "success": False,
-            "error": str(e)
+            "error": "CSV data file not found"
         })
+    
+    # Initialize cities if not already loaded
+    if not all_cities:
+        all_cities = extract_cities_from_csv(latest_csv_path)
+    
+    # Get row count
+    row_count = get_csv_row_count()
+    
+    return JSONResponse({
+        "success": True,
+        "message": f"Using existing CSV with {row_count} listings",
+        "csv_path": latest_csv_path,
+        "cities_found": len(all_cities),
+        "cities": sorted(all_cities),  # Return all cities sorted
+        "total_listings": row_count,
+        "data_source": "Pre-scraped data from 2025-08-11"
+    })
 
 @app.post("/filter")
 async def filter_listings(
@@ -100,14 +97,14 @@ async def filter_listings(
     end_date: str = Form(...),
     email: str = Form("")
 ):
-    """Filter listings from CSV by city and date range."""
+    """Filter listings from the existing CSV with 654 results by city and date range."""
     try:
-        latest_csv_path = get_latest_csv_path()
+        global latest_csv_path
         
         if not latest_csv_path or not os.path.exists(latest_csv_path):
             return JSONResponse({
                 "success": False,
-                "error": "No CSV data available. Please scrape all listings first."
+                "error": "CSV data file not found. The application uses pre-scraped data with 654 listings."
             })
         
         # Load and filter CSV data using basic CSV handling
@@ -226,14 +223,21 @@ async def download_csv():
 
 @app.get("/cities")
 async def get_cities():
-    """Get all available cities from the latest CSV."""
-    latest_csv_path = get_latest_csv_path()
+    """Get all available cities from the existing CSV with 654 results."""
+    global latest_csv_path, all_cities
     
     if not latest_csv_path or not os.path.exists(latest_csv_path):
-        return JSONResponse({"cities": []})
+        return JSONResponse({"cities": [], "error": "CSV data not found"})
     
-    cities = await extract_cities_from_csv(latest_csv_path)
-    return JSONResponse({"cities": cities})
+    # Initialize cities if not already loaded
+    if not all_cities:
+        all_cities = extract_cities_from_csv(latest_csv_path)
+    
+    return JSONResponse({
+        "cities": sorted(all_cities),
+        "count": len(all_cities),
+        "data_source": "Pre-scraped data with 654 listings"
+    })
 
 @app.get("/health")
 async def health_check():
@@ -841,12 +845,32 @@ ClearRecon Scraper System
         print(f"Failed to send email: {str(e)}")
         return False
 
-def get_latest_csv_path() -> Optional[str]:
+def get_latest_csv_path():
     """Get the path to the most recent CSV file."""
-    csv_files = glob.glob("csv_data/*.csv")
-    if not csv_files:
-        return None
-    return max(csv_files, key=os.path.getctime)
+    global latest_csv_path
+    # Always return the predefined successful CSV path
+    if latest_csv_path and os.path.exists(latest_csv_path):
+        return latest_csv_path
+    
+    # Fallback to searching for CSV files
+    csv_files = glob.glob("csv_data/clearrecon_listings_*.csv")
+    if csv_files:
+        return max(csv_files, key=os.path.getctime)
+    return None
+
+def get_csv_row_count():
+    """Get the number of rows in the current CSV file."""
+    global latest_csv_path
+    
+    if not latest_csv_path or not os.path.exists(latest_csv_path):
+        return 0
+    
+    try:
+        with open(latest_csv_path, 'r', encoding='utf-8') as f:
+            return sum(1 for line in csv.DictReader(f))
+    except Exception as e:
+        print(f"Error counting CSV rows: {e}")
+        return 0
 
 def extract_cities_from_csv(csv_path: str) -> List[str]:
     """Extract all unique cities from the CSV file with proper capitalization."""
@@ -860,7 +884,10 @@ def extract_cities_from_csv(csv_path: str) -> List[str]:
                     # Normalize city name: lowercase first, then title case
                     normalized_city = city.lower().title()
                     cities.add(normalized_city)
-        return sorted(list(cities))
+        
+        city_list = sorted(list(cities))
+        print(f"Extracted {len(city_list)} unique cities from CSV")
+        return city_list
     except Exception as e:
         print(f"Error extracting cities: {e}")
         return []
