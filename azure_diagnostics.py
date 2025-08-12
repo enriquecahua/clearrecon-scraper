@@ -147,6 +147,17 @@ class AzureDiagnostics:
     def test_chromedriver_setup(self):
         """Test 5: ChromeDriver Setup"""
         try:
+            # Solution 2: Clear webdriver-manager cache if THIRD_PARTY_NOTICES issue persists
+            import shutil
+            wdm_cache_dir = os.path.expanduser("~/.wdm")
+            if os.path.exists(wdm_cache_dir):
+                print(f"Clearing webdriver-manager cache at: {wdm_cache_dir}")
+                try:
+                    shutil.rmtree(wdm_cache_dir)
+                    print("✅ Cache cleared successfully")
+                except Exception as cache_error:
+                    print(f"⚠️ Could not clear cache: {cache_error}")
+            
             # Test ChromeDriver installation with improved path resolution
             chromedriver_path = ChromeDriverManager().install()
             

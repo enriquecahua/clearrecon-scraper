@@ -299,6 +299,18 @@ def scrape_clearrecon_selenium_enhanced() -> str:
         # Try webdriver-manager first, but with improved path resolution
         try:
             print("Attempting webdriver-manager approach...")
+            
+            # Solution 2: Clear webdriver-manager cache if THIRD_PARTY_NOTICES issue persists
+            import shutil
+            wdm_cache_dir = os.path.expanduser("~/.wdm")
+            if os.path.exists(wdm_cache_dir):
+                print(f"Clearing webdriver-manager cache at: {wdm_cache_dir}")
+                try:
+                    shutil.rmtree(wdm_cache_dir)
+                    print("✅ Cache cleared successfully")
+                except Exception as cache_error:
+                    print(f"⚠️ Could not clear cache: {cache_error}")
+            
             chromedriver_path = ChromeDriverManager().install()
             print(f"ChromeDriver downloaded to: {chromedriver_path}")
             
@@ -345,11 +357,17 @@ def scrape_clearrecon_selenium_enhanced() -> str:
             except Exception as system_error:
                 print(f"System ChromeDriver also failed: {system_error}")
                 
-                # Last resort: Try common system paths
+                # Solution 3: Manual ChromeDriver paths - try common system locations
+                print("Trying manual ChromeDriver paths...")
                 common_paths = [
                     '/usr/bin/chromedriver',
                     '/usr/local/bin/chromedriver',
-                    '/opt/google/chrome/chromedriver'
+                    '/opt/google/chrome/chromedriver',
+                    '/snap/bin/chromium.chromedriver',
+                    '/usr/lib/chromium-browser/chromedriver',
+                    # Azure-specific paths
+                    '/home/site/wwwroot/chromedriver',
+                    '/tmp/chromedriver'
                 ]
                 
                 driver_found = False
